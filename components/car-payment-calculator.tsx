@@ -22,7 +22,6 @@ import {
 	FileImage,
 	ChevronDown,
 } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
 	Accordion,
 	AccordionContent,
@@ -41,6 +40,7 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
+import { Slider } from "@/components/ui/slider";
 
 // Define types for our line items
 type LineItem = {
@@ -50,7 +50,13 @@ type LineItem = {
 };
 
 // Car make and model data
-const carData = {
+const carData: Record<
+	string,
+	{
+		models: string[];
+		trims: Record<string, string[]>;
+	}
+> = {
 	Acura: {
 		models: ["ILX", "MDX", "RDX", "TLX", "NSX"],
 		trims: {
@@ -222,6 +228,8 @@ const generateYearArray = (startYear: number, endYear: number) => {
 	return years;
 };
 
+// Default line items for each category with OEM references
+
 export default function CarPaymentCalculator() {
 	// Vehicle details
 	const [vehicleYear, setVehicleYear] = useState("");
@@ -235,6 +243,73 @@ export default function CarPaymentCalculator() {
 	const [loanAmount, setLoanAmount] = useState(47900);
 	const [apr, setApr] = useState(5.99);
 	const [loanTerm, setLoanTerm] = useState(48);
+
+	// Generate a unique ID
+	const generateId = () => {
+		return Math.random().toString(36).substring(2, 9);
+	};
+
+	// Create default items with OEM references
+	const createDefaultAccessories = () => [
+		{ id: generateId(), name: "Factory All-Weather Floor Mats", value: 175 },
+		{ id: generateId(), name: "OEM Roof Rack/Cross Bars", value: 350 },
+		{ id: generateId(), name: "Interior Ambient Lighting Package", value: 250 },
+		{ id: generateId(), name: "Towing Package", value: 1200 },
+		{ id: generateId(), name: "Premium Wheels Upgrade", value: 1500 },
+		{ id: generateId(), name: "Other (Custom)", value: 0 },
+	];
+
+	const createDefaultOffersRebates = () => [
+		{ id: generateId(), name: "Manufacturer Cash Rebate", value: 2500 },
+		{ id: generateId(), name: "Loyalty Discount", value: 1000 },
+		{ id: generateId(), name: "Military/First Responder Discount", value: 500 },
+		{ id: generateId(), name: "College Graduate Program", value: 750 },
+		{ id: generateId(), name: "Year-End Clearance Incentive", value: 1500 },
+		{ id: generateId(), name: "Other (Custom)", value: 0 },
+	];
+
+	const createDefaultProtectionPlans = () => [
+		{ id: generateId(), name: "Extended Manufacturer Warranty", value: 1800 },
+		{ id: generateId(), name: "Tire & Wheel Protection", value: 900 },
+		{ id: generateId(), name: "Paintless Dent Repair Plan", value: 600 },
+		{ id: generateId(), name: "Key Replacement Coverage", value: 250 },
+		{ id: generateId(), name: "Gap Insurance", value: 800 },
+		{ id: generateId(), name: "Other (Custom)", value: 0 },
+	];
+
+	const createDefaultSubscriptions = () => [
+		{
+			id: generateId(),
+			name: "Premium Connected Services (3 years)",
+			value: 900,
+		},
+		{
+			id: generateId(),
+			name: "Advanced Driver Assistance Subscription",
+			value: 750,
+		},
+		{ id: generateId(), name: "OEM Navigation & Map Updates", value: 450 },
+		{ id: generateId(), name: "Premium Audio Streaming", value: 300 },
+		{ id: generateId(), name: "Remote Access Services Package", value: 550 },
+		{ id: generateId(), name: "Other (Custom)", value: 0 },
+	];
+
+	const createDefaultChargers = () => [
+		{ id: generateId(), name: "OEM Level 2 Home Charging Station", value: 800 },
+		{ id: generateId(), name: "Professional Installation", value: 600 },
+		{
+			id: generateId(),
+			name: "Portable Level 1 Emergency Charger",
+			value: 300,
+		},
+		{
+			id: generateId(),
+			name: "Commercial Charging Network Credit",
+			value: 500,
+		},
+		{ id: generateId(), name: "Charging Cable Organizer", value: 120 },
+		{ id: generateId(), name: "Other (Custom)", value: 0 },
+	];
 
 	// Multiple line items
 	const [tradeIns, setTradeIns] = useState<LineItem[]>([]);
@@ -324,23 +399,47 @@ export default function CarPaymentCalculator() {
 		e.target.select();
 	};
 
-	// Generate a unique ID
-	const generateId = () => {
-		return Math.random().toString(36).substring(2, 9);
-	};
-
 	// Add a new line item
 	const addLineItem = (
 		items: LineItem[],
 		setItems: React.Dispatch<React.SetStateAction<LineItem[]>>,
-		defaultName = ""
+		defaultName: string
 	) => {
-		const newItem = {
-			id: generateId(),
-			name: defaultName,
-			value: 0,
-		};
-		setItems([...items, newItem]);
+		const id = generateId();
+		let name = "";
+
+		// Use appropriate default names based on the type
+		switch (defaultName) {
+			case "Vehicle":
+				name = "Vehicle Trade-in";
+				break;
+			case "Accessory":
+				name = "New Accessory";
+				break;
+			case "Rebate":
+				name = "New Rebate";
+				break;
+			case "Protection Plan":
+				name = "New Protection Plan";
+				break;
+			case "Subscription":
+				name = "New Subscription";
+				break;
+			case "Charger":
+				name = "New Charger";
+				break;
+			default:
+				name = defaultName;
+		}
+
+		setItems([
+			...items,
+			{
+				id,
+				name,
+				value: 0,
+			},
+		]);
 	};
 
 	// Remove a line item
@@ -412,7 +511,7 @@ export default function CarPaymentCalculator() {
 		const [isFocused, setIsFocused] = useState(false);
 		const inputRef = useRef<HTMLInputElement>(null);
 
-		// Update local value when prop changes
+		// Update local value when prop changes and not focused
 		useEffect(() => {
 			if (!isFocused) {
 				setLocalValue(value);
@@ -422,31 +521,32 @@ export default function CarPaymentCalculator() {
 		const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 			const newValue = e.target.value;
 
-			// If currency, only allow numbers, decimal point, and optionally a negative sign
-			if (isCurrency) {
-				// Allow numbers, a single decimal point, and nothing else
-				// Empty string is allowed to clear the field
-				if (newValue === "" || /^-?\d*\.?\d*$/.test(newValue)) {
-					setLocalValue(newValue);
-				}
-			} else {
-				// For non-currency fields (names), always update the local value
-				setLocalValue(newValue);
-				// Immediately notify parent for non-currency fields
+			// Update local state immediately for all inputs
+			setLocalValue(newValue);
+
+			// For non-currency fields, update parent state immediately
+			// Allow alphanumeric characters, spaces, and common punctuation
+			if (!isCurrency) {
 				onChange(newValue);
+			} else {
+				// For currency fields, only validate the input format
+				if (newValue === "" || /^-?\d*\.?\d*$/.test(newValue)) {
+					// Valid currency format, don't call onChange yet (wait for blur)
+				} else {
+					// Revert to previous valid value if invalid currency format
+					setLocalValue(localValue);
+				}
 			}
 		};
 
 		const handleBlur = () => {
 			setIsFocused(false);
+			// Only process currency values on blur
 			if (isCurrency) {
 				const parsedValue = parseCurrency(localValue);
 				const currencyValue = formatCurrency(parsedValue);
 				setLocalValue(currencyValue);
 				onChange(currencyValue);
-			} else {
-				// Ensure parent gets final value on blur for name fields
-				onChange(localValue);
 			}
 		};
 
@@ -463,7 +563,7 @@ export default function CarPaymentCalculator() {
 		return (
 			<input
 				ref={inputRef}
-				type={isCurrency ? "text" : "text"}
+				type="text"
 				inputMode={isCurrency ? "decimal" : "text"}
 				className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
 				value={localValue}
@@ -660,8 +760,141 @@ export default function CarPaymentCalculator() {
 		}
 	};
 
-	// Line Items Component
+	// Line Items Component for all items except Trade-ins
 	const LineItemsSection = ({
+		title,
+		items,
+		setItems,
+		addItem,
+		removeItem,
+		updateItem,
+		total,
+		defaultOptions,
+	}: {
+		title: string;
+		items: LineItem[];
+		setItems: React.Dispatch<React.SetStateAction<LineItem[]>>;
+		addItem: () => void;
+		removeItem: (id: string) => void;
+		updateItem: (
+			id: string,
+			field: "name" | "value",
+			value: string | number
+		) => void;
+		total: number;
+		defaultOptions?: { name: string; value: number }[];
+	}) => {
+		const [selectedOption, setSelectedOption] = useState("");
+
+		const handleAddDefault = () => {
+			if (!selectedOption || !defaultOptions) return;
+
+			const option = defaultOptions.find((opt) => opt.name === selectedOption);
+			if (option) {
+				const id = generateId();
+				setItems([
+					...items,
+					{
+						id,
+						name: option.name,
+						value: option.value,
+					},
+				]);
+				setSelectedOption("");
+			}
+		};
+
+		return (
+			<div className="space-y-4">
+				<div className="flex justify-between items-center">
+					<h3 className="text-lg font-medium">{title}</h3>
+					{defaultOptions ? (
+						<div className="flex items-center gap-2">
+							<select
+								value={selectedOption}
+								onChange={(e) => setSelectedOption(e.target.value)}
+								className="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+							>
+								<option value="">Select {title}</option>
+								{defaultOptions.map((option) => (
+									<option key={option.name} value={option.name}>
+										{option.name} ({formatCurrency(option.value)})
+									</option>
+								))}
+							</select>
+							<Button
+								variant="outline"
+								size="sm"
+								onClick={handleAddDefault}
+								disabled={!selectedOption}
+								className="flex items-center gap-1"
+							>
+								<PlusCircle className="h-4 w-4" /> Add
+							</Button>
+							<Button
+								variant="outline"
+								size="sm"
+								onClick={addItem}
+								className="flex items-center gap-1"
+							>
+								<PlusCircle className="h-4 w-4" /> Custom
+							</Button>
+						</div>
+					) : (
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={addItem}
+							className="flex items-center gap-1"
+						>
+							<PlusCircle className="h-4 w-4" /> Add
+						</Button>
+					)}
+				</div>
+
+				{items.length === 0 ? (
+					<p className="text-sm text-muted-foreground">No items added</p>
+				) : (
+					<div className="space-y-3">
+						{items.map((item) => (
+							<div key={item.id} className="flex gap-2 items-center">
+								<div className="flex-1">
+									<LineItemInput
+										value={item.name}
+										isCurrency={false}
+										placeholder="Item name"
+										onChange={(value) => updateItem(item.id, "name", value)}
+									/>
+								</div>
+								<div className="w-32">
+									<LineItemInput
+										value={formatCurrency(item.value)}
+										isCurrency={true}
+										onChange={(value) => updateItem(item.id, "value", value)}
+									/>
+								</div>
+								<Button
+									variant="ghost"
+									size="icon"
+									onClick={() => removeItem(item.id)}
+									className="h-9 w-9"
+								>
+									<Trash2 className="h-4 w-4" />
+								</Button>
+							</div>
+						))}
+						<div className="flex justify-between pt-2 border-t">
+							<span className="font-medium">Total:</span>
+							<span className="font-medium">{formatCurrency(total)}</span>
+						</div>
+					</div>
+				)}
+			</div>
+		);
+	};
+
+	// Trade-in Items Component with Year/Make/Model fields
+	const TradeInItemsSection = ({
 		title,
 		items,
 		setItems,
@@ -681,62 +914,171 @@ export default function CarPaymentCalculator() {
 			value: string | number
 		) => void;
 		total: number;
-	}) => (
-		<div className="space-y-4">
-			<div className="flex justify-between items-center">
-				<h3 className="text-lg font-medium">{title}</h3>
-				<Button
-					variant="outline"
-					size="sm"
-					onClick={addItem}
-					className="flex items-center gap-1"
-				>
-					<PlusCircle className="h-4 w-4" /> Add
-				</Button>
-			</div>
+	}) => {
+		const addVehicleTradeIn = () => {
+			const id = generateId();
+			setItems([
+				...items,
+				{
+					id,
+					name: "Vehicle Trade-in",
+					value: 0,
+				},
+			]);
+		};
 
-			{items.length === 0 ? (
-				<p className="text-sm text-muted-foreground">No items added</p>
-			) : (
-				<div className="space-y-3">
-					{items.map((item) => (
-						<div key={item.id} className="flex gap-2 items-center">
-							<div className="flex-1">
-								<Input
-									type="text"
-									value={item.name}
-									placeholder="Item name"
-									onChange={(e) => {
-										// Directly call updateItem with the new value
-										updateItem(item.id, "name", e.target.value);
-									}}
-								/>
-							</div>
-							<div className="w-32">
-								<LineItemInput
-									value={formatCurrency(item.value)}
-									isCurrency={true}
-									onChange={(value) => updateItem(item.id, "value", value)}
-								/>
-							</div>
-							<Button
-								variant="ghost"
-								size="icon"
-								onClick={() => removeItem(item.id)}
-								className="h-9 w-9"
-							>
-								<Trash2 className="h-4 w-4" />
-							</Button>
-						</div>
-					))}
-					<div className="flex justify-between pt-2 border-t">
-						<span className="font-medium">Total:</span>
-						<span className="font-medium">{formatCurrency(total)}</span>
-					</div>
+		return (
+			<div className="space-y-4">
+				<div className="flex justify-between items-center">
+					<h3 className="text-lg font-medium">{title}</h3>
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={addVehicleTradeIn}
+						className="flex items-center gap-1"
+					>
+						<PlusCircle className="h-4 w-4" /> Add Vehicle
+					</Button>
 				</div>
-			)}
-		</div>
-	);
+
+				{items.length === 0 ? (
+					<p className="text-sm text-muted-foreground">
+						No trade-in vehicles added
+					</p>
+				) : (
+					<div className="space-y-4">
+						{items.map((item) => (
+							<div key={item.id} className="p-3 border rounded-md">
+								<div className="flex justify-between mb-3">
+									<h4 className="font-medium">Trade-in Details</h4>
+									<Button
+										variant="ghost"
+										size="icon"
+										onClick={() => removeItem(item.id)}
+										className="h-8 w-8"
+									>
+										<Trash2 className="h-4 w-4" />
+									</Button>
+								</div>
+								<div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+									<div>
+										<Label
+											htmlFor={`year-${item.id}`}
+											className="text-xs block mb-1"
+										>
+											Year
+										</Label>
+										<select
+											id={`year-${item.id}`}
+											className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+											onChange={(e) => {
+												const year = e.target.value;
+												const [make, model] = item.name.split(" - ").slice(1);
+												const newName =
+													year && make && model
+														? `${year} - ${make} - ${model}`
+														: item.name;
+												updateItem(item.id, "name", newName);
+											}}
+											value={item.name.split(" - ")[0] || ""}
+										>
+											<option value="">Select Year</option>
+											{years.map((year) => (
+												<option key={year} value={year.toString()}>
+													{year}
+												</option>
+											))}
+										</select>
+									</div>
+									<div>
+										<Label
+											htmlFor={`make-${item.id}`}
+											className="text-xs block mb-1"
+										>
+											Make
+										</Label>
+										<select
+											id={`make-${item.id}`}
+											className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+											onChange={(e) => {
+												const make = e.target.value;
+												const nameParts = item.name.split(" - ");
+												const year = nameParts[0];
+												const newName =
+													year && make
+														? `${year} - ${make} - ${nameParts[2] || ""}`
+														: item.name;
+												updateItem(item.id, "name", newName);
+											}}
+											value={item.name.split(" - ")[1] || ""}
+										>
+											<option value="">Select Make</option>
+											{Object.keys(carData).map((make) => (
+												<option key={make} value={make}>
+													{make}
+												</option>
+											))}
+										</select>
+									</div>
+									<div>
+										<Label
+											htmlFor={`model-${item.id}`}
+											className="text-xs block mb-1"
+										>
+											Model
+										</Label>
+										<select
+											id={`model-${item.id}`}
+											className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+											onChange={(e) => {
+												const model = e.target.value;
+												const nameParts = item.name.split(" - ");
+												const year = nameParts[0];
+												const make = nameParts[1];
+												const newName =
+													year && make && model
+														? `${year} - ${make} - ${model}`
+														: item.name;
+												updateItem(item.id, "name", newName);
+											}}
+											value={item.name.split(" - ")[2] || ""}
+										>
+											<option value="">Select Model</option>
+											{item.name.split(" - ")[1] &&
+												carData[item.name.split(" - ")[1]]?.models.map(
+													(model) => (
+														<option key={model} value={model}>
+															{model}
+														</option>
+													)
+												)}
+										</select>
+									</div>
+								</div>
+								<div className="flex items-center gap-2">
+									<Label
+										htmlFor={`value-${item.id}`}
+										className="whitespace-nowrap"
+									>
+										Trade-in Value:
+									</Label>
+									<LineItemInput
+										value={formatCurrency(item.value)}
+										isCurrency={true}
+										onChange={(value) => updateItem(item.id, "value", value)}
+									/>
+								</div>
+							</div>
+						))}
+						<div className="flex justify-between pt-2 border-t">
+							<span className="font-medium">Total:</span>
+							<span className="font-medium">{formatCurrency(total)}</span>
+						</div>
+					</div>
+				)}
+			</div>
+		);
+	};
 
 	return (
 		<div ref={calculatorRef} className="bg-white p-6 rounded-lg">
@@ -865,19 +1207,36 @@ export default function CarPaymentCalculator() {
 					{/* Basic Purchase Details */}
 					<div className="space-y-2">
 						<h3 className="text-lg font-medium">Purchase Details</h3>
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+						<div className="grid grid-cols-1 gap-4">
 							<CurrencyInput
 								id="purchasePrice"
 								value={purchasePrice}
 								onChange={setPurchasePrice}
 								label="Purchase Price"
 							/>
-							<CurrencyInput
-								id="downPayment"
-								value={downPayment}
-								onChange={setDownPayment}
-								label="Down Payment"
-							/>
+							<div className="space-y-4">
+								<div className="flex justify-between">
+									<Label htmlFor="downPayment">Down Payment</Label>
+									<span className="text-sm font-medium">
+										{formatCurrency(downPayment)}
+									</span>
+								</div>
+								<Slider
+									id="downPayment"
+									min={0}
+									max={Math.max(purchasePrice * 0.5, 1000)}
+									step={100}
+									value={[downPayment]}
+									onValueChange={(value) => setDownPayment(value[0])}
+									className="py-4"
+								/>
+								<div className="flex justify-between text-xs text-muted-foreground">
+									<span>{formatCurrency(0)}</span>
+									<span>
+										{formatCurrency(Math.max(purchasePrice * 0.5, 1000))}
+									</span>
+								</div>
+							</div>
 						</div>
 
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
@@ -897,241 +1256,243 @@ export default function CarPaymentCalculator() {
 							</div>
 							<div className="space-y-2">
 								<Label htmlFor="loanTerm">Loan Term (months)</Label>
-								<Input
-									id="loanTerm"
-									type="number"
-									min="1"
-									value={loanTerm}
-									onChange={(e) =>
-										setLoanTerm(Number.parseInt(e.target.value) || 0)
-									}
-									onFocus={(e) => e.target.select()}
-								/>
+								<div className="grid grid-cols-4 gap-2">
+									{[24, 32, 40, 48, 56, 64, 72, 80].map((term) => (
+										<Button
+											key={term}
+											type="button"
+											variant={loanTerm === term ? "default" : "outline"}
+											size="sm"
+											onClick={() => setLoanTerm(term)}
+											className="w-full"
+										>
+											{term}
+										</Button>
+									))}
+								</div>
 							</div>
 						</div>
 					</div>
 
 					<Separator />
 
-					{/* Line Items Tabs */}
-					<Tabs defaultValue="tradeIns" className="w-full">
-						<TabsList className="grid grid-cols-3 md:grid-cols-6 mb-4">
-							<TabsTrigger
-								value="tradeIns"
-								onClick={(e) => e.stopPropagation()}
-							>
-								Trade-ins
-							</TabsTrigger>
-							<TabsTrigger
-								value="accessories"
-								onClick={(e) => e.stopPropagation()}
-							>
-								Accessories
-							</TabsTrigger>
-							<TabsTrigger
-								value="offersRebates"
-								onClick={(e) => e.stopPropagation()}
-							>
-								Offers & Rebates
-							</TabsTrigger>
-							<TabsTrigger
-								value="protectionPlans"
-								onClick={(e) => e.stopPropagation()}
-							>
-								Protection Plans
-							</TabsTrigger>
-							<TabsTrigger
-								value="subscriptions"
-								onClick={(e) => e.stopPropagation()}
-							>
-								Subscriptions
-							</TabsTrigger>
-							<TabsTrigger
-								value="chargers"
-								onClick={(e) => e.stopPropagation()}
-							>
-								Chargers
-							</TabsTrigger>
-						</TabsList>
+					{/* Line Items Stacked Layout */}
+					<div className="space-y-6">
+						<h3 className="text-lg font-medium">Line Items</h3>
 
-						<TabsContent value="tradeIns">
-							<LineItemsSection
-								title="Trade-in Vehicles"
-								items={tradeIns}
-								setItems={setTradeIns}
-								addItem={() => addLineItem(tradeIns, setTradeIns, "Vehicle")}
-								removeItem={(id) => removeLineItem(id, tradeIns, setTradeIns)}
-								updateItem={(id, field, value) => {
-									if (field === "name") {
-										// Directly update the state with the new name
-										const updatedItems = tradeIns.map((item) =>
-											item.id === id ? { ...item, name: value as string } : item
-										);
-										setTradeIns(updatedItems);
-									} else {
-										// Handle value updates
-										updateItemValue(id, value as string, tradeIns, setTradeIns);
+						<div className="space-y-8">
+							{/* Trade-ins */}
+							<div className="p-4 border rounded-lg">
+								<TradeInItemsSection
+									title="Trade-in Vehicles"
+									items={tradeIns}
+									setItems={setTradeIns}
+									addItem={() => {}}
+									removeItem={(id) => removeLineItem(id, tradeIns, setTradeIns)}
+									updateItem={(id, field, value) => {
+										if (field === "name") {
+											// Directly update the state with the new name
+											const updatedItems = tradeIns.map((item) =>
+												item.id === id
+													? { ...item, name: value as string }
+													: item
+											);
+											setTradeIns(updatedItems);
+										} else {
+											// Handle value updates
+											updateItemValue(
+												id,
+												value as string,
+												tradeIns,
+												setTradeIns
+											);
+										}
+									}}
+									total={tradeInTotal}
+								/>
+							</div>
+
+							{/* Accessories */}
+							<div className="p-4 border rounded-lg">
+								<LineItemsSection
+									title="Accessories"
+									items={accessories}
+									setItems={setAccessories}
+									addItem={() =>
+										addLineItem(accessories, setAccessories, "Accessory")
 									}
-								}}
-								total={tradeInTotal}
-							/>
-						</TabsContent>
-
-						<TabsContent value="accessories">
-							<LineItemsSection
-								title="Accessories"
-								items={accessories}
-								setItems={setAccessories}
-								addItem={() =>
-									addLineItem(accessories, setAccessories, "Accessory")
-								}
-								removeItem={(id) =>
-									removeLineItem(id, accessories, setAccessories)
-								}
-								updateItem={(id, field, value) => {
-									if (field === "name") {
-										// Directly update the state with the new name
-										const updatedItems = accessories.map((item) =>
-											item.id === id ? { ...item, name: value as string } : item
-										);
-										setAccessories(updatedItems);
-									} else {
-										// Handle value updates
-										updateItemValue(
-											id,
-											value as string,
-											accessories,
-											setAccessories
-										);
+									removeItem={(id) =>
+										removeLineItem(id, accessories, setAccessories)
 									}
-								}}
-								total={accessoriesTotal}
-							/>
-						</TabsContent>
+									updateItem={(id, field, value) => {
+										if (field === "name") {
+											// Directly update the state with the new name
+											const updatedItems = accessories.map((item) =>
+												item.id === id
+													? { ...item, name: value as string }
+													: item
+											);
+											setAccessories(updatedItems);
+										} else {
+											// Handle value updates
+											updateItemValue(
+												id,
+												value as string,
+												accessories,
+												setAccessories
+											);
+										}
+									}}
+									total={accessoriesTotal}
+									defaultOptions={createDefaultAccessories()}
+								/>
+							</div>
 
-						<TabsContent value="offersRebates">
-							<LineItemsSection
-								title="Offers & Rebates"
-								items={offersRebates}
-								setItems={setOffersRebates}
-								addItem={() =>
-									addLineItem(offersRebates, setOffersRebates, "Rebate")
-								}
-								removeItem={(id) =>
-									removeLineItem(id, offersRebates, setOffersRebates)
-								}
-								updateItem={(id, field, value) => {
-									if (field === "name") {
-										// Directly update the state with the new name
-										const updatedItems = offersRebates.map((item) =>
-											item.id === id ? { ...item, name: value as string } : item
-										);
-										setOffersRebates(updatedItems);
-									} else {
-										// Handle value updates
-										updateItemValue(
-											id,
-											value as string,
-											offersRebates,
-											setOffersRebates
-										);
+							{/* Offers & Rebates */}
+							<div className="p-4 border rounded-lg">
+								<LineItemsSection
+									title="Offers & Rebates"
+									items={offersRebates}
+									setItems={setOffersRebates}
+									addItem={() =>
+										addLineItem(offersRebates, setOffersRebates, "Rebate")
 									}
-								}}
-								total={offersRebatesTotal}
-							/>
-						</TabsContent>
+									removeItem={(id) =>
+										removeLineItem(id, offersRebates, setOffersRebates)
+									}
+									updateItem={(id, field, value) => {
+										if (field === "name") {
+											// Directly update the state with the new name
+											const updatedItems = offersRebates.map((item) =>
+												item.id === id
+													? { ...item, name: value as string }
+													: item
+											);
+											setOffersRebates(updatedItems);
+										} else {
+											// Handle value updates
+											updateItemValue(
+												id,
+												value as string,
+												offersRebates,
+												setOffersRebates
+											);
+										}
+									}}
+									total={offersRebatesTotal}
+									defaultOptions={createDefaultOffersRebates()}
+								/>
+							</div>
 
-						<TabsContent value="protectionPlans">
-							<LineItemsSection
-								title="Protection Plans"
-								items={protectionPlans}
-								setItems={setProtectionPlans}
-								addItem={() =>
-									addLineItem(
-										protectionPlans,
-										setProtectionPlans,
-										"Protection Plan"
-									)
-								}
-								removeItem={(id) =>
-									removeLineItem(id, protectionPlans, setProtectionPlans)
-								}
-								updateItem={(id, field, value) => {
-									if (field === "name") {
-										// Directly update the state with the new name
-										const updatedItems = protectionPlans.map((item) =>
-											item.id === id ? { ...item, name: value as string } : item
-										);
-										setProtectionPlans(updatedItems);
-									} else {
-										// Handle value updates
-										updateItemValue(
-											id,
-											value as string,
+							{/* Protection Plans */}
+							<div className="p-4 border rounded-lg">
+								<LineItemsSection
+									title="Protection Plans"
+									items={protectionPlans}
+									setItems={setProtectionPlans}
+									addItem={() =>
+										addLineItem(
 											protectionPlans,
-											setProtectionPlans
-										);
+											setProtectionPlans,
+											"Protection Plan"
+										)
 									}
-								}}
-								total={protectionPlansTotal}
-							/>
-						</TabsContent>
+									removeItem={(id) =>
+										removeLineItem(id, protectionPlans, setProtectionPlans)
+									}
+									updateItem={(id, field, value) => {
+										if (field === "name") {
+											// Directly update the state with the new name
+											const updatedItems = protectionPlans.map((item) =>
+												item.id === id
+													? { ...item, name: value as string }
+													: item
+											);
+											setProtectionPlans(updatedItems);
+										} else {
+											// Handle value updates
+											updateItemValue(
+												id,
+												value as string,
+												protectionPlans,
+												setProtectionPlans
+											);
+										}
+									}}
+									total={protectionPlansTotal}
+									defaultOptions={createDefaultProtectionPlans()}
+								/>
+							</div>
 
-						<TabsContent value="subscriptions">
-							<LineItemsSection
-								title="Subscriptions"
-								items={subscriptions}
-								setItems={setSubscriptions}
-								addItem={() =>
-									addLineItem(subscriptions, setSubscriptions, "Subscription")
-								}
-								removeItem={(id) =>
-									removeLineItem(id, subscriptions, setSubscriptions)
-								}
-								updateItem={(id, field, value) => {
-									if (field === "name") {
-										// Directly update the state with the new name
-										const updatedItems = subscriptions.map((item) =>
-											item.id === id ? { ...item, name: value as string } : item
-										);
-										setSubscriptions(updatedItems);
-									} else {
-										// Handle value updates
-										updateItemValue(
-											id,
-											value as string,
-											subscriptions,
-											setSubscriptions
-										);
+							{/* Subscriptions */}
+							<div className="p-4 border rounded-lg">
+								<LineItemsSection
+									title="Subscriptions"
+									items={subscriptions}
+									setItems={setSubscriptions}
+									addItem={() =>
+										addLineItem(subscriptions, setSubscriptions, "Subscription")
 									}
-								}}
-								total={subscriptionsTotal}
-							/>
-						</TabsContent>
+									removeItem={(id) =>
+										removeLineItem(id, subscriptions, setSubscriptions)
+									}
+									updateItem={(id, field, value) => {
+										if (field === "name") {
+											// Directly update the state with the new name
+											const updatedItems = subscriptions.map((item) =>
+												item.id === id
+													? { ...item, name: value as string }
+													: item
+											);
+											setSubscriptions(updatedItems);
+										} else {
+											// Handle value updates
+											updateItemValue(
+												id,
+												value as string,
+												subscriptions,
+												setSubscriptions
+											);
+										}
+									}}
+									total={subscriptionsTotal}
+									defaultOptions={createDefaultSubscriptions()}
+								/>
+							</div>
 
-						<TabsContent value="chargers">
-							<LineItemsSection
-								title="Chargers"
-								items={chargers}
-								setItems={setChargers}
-								addItem={() => addLineItem(chargers, setChargers, "Charger")}
-								removeItem={(id) => removeLineItem(id, chargers, setChargers)}
-								updateItem={(id, field, value) => {
-									if (field === "name") {
-										// Directly update the state with the new name
-										const updatedItems = chargers.map((item) =>
-											item.id === id ? { ...item, name: value as string } : item
-										);
-										setChargers(updatedItems);
-									} else {
-										// Handle value updates
-										updateItemValue(id, value as string, chargers, setChargers);
-									}
-								}}
-								total={chargersTotal}
-							/>
-						</TabsContent>
-					</Tabs>
+							{/* Chargers */}
+							<div className="p-4 border rounded-lg">
+								<LineItemsSection
+									title="Chargers"
+									items={chargers}
+									setItems={setChargers}
+									addItem={() => addLineItem(chargers, setChargers, "Charger")}
+									removeItem={(id) => removeLineItem(id, chargers, setChargers)}
+									updateItem={(id, field, value) => {
+										if (field === "name") {
+											// Directly update the state with the new name
+											const updatedItems = chargers.map((item) =>
+												item.id === id
+													? { ...item, name: value as string }
+													: item
+											);
+											setChargers(updatedItems);
+										} else {
+											// Handle value updates
+											updateItemValue(
+												id,
+												value as string,
+												chargers,
+												setChargers
+											);
+										}
+									}}
+									total={chargersTotal}
+									defaultOptions={createDefaultChargers()}
+								/>
+							</div>
+						</div>
+					</div>
 
 					<Separator className="my-2" />
 
