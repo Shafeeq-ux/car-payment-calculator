@@ -359,13 +359,12 @@ export default function CarPaymentCalculator() {
 		items: LineItem[],
 		setItems: React.Dispatch<React.SetStateAction<LineItem[]>>
 	) => {
-		// Important: Don't overwrite existing item values
-		const updatedItems = items.map((item) => {
-			if (item.id === id) {
-				return { ...item, name: name };
-			}
-			return item;
-		});
+		// Create a new array with the updated item
+		const updatedItems = items.map((item) =>
+			item.id === id ? { ...item, name: name } : item
+		);
+
+		// Directly update the state
 		setItems(updatedItems);
 	};
 
@@ -703,12 +702,14 @@ export default function CarPaymentCalculator() {
 					{items.map((item) => (
 						<div key={item.id} className="flex gap-2 items-center">
 							<div className="flex-1">
-								<input
+								<Input
 									type="text"
-									className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
 									value={item.name}
 									placeholder="Item name"
-									onChange={(e) => updateItem(item.id, "name", e.target.value)}
+									onChange={(e) => {
+										// Directly call updateItem with the new value
+										updateItem(item.id, "name", e.target.value);
+									}}
 								/>
 							</div>
 							<div className="w-32">
@@ -962,8 +963,13 @@ export default function CarPaymentCalculator() {
 								removeItem={(id) => removeLineItem(id, tradeIns, setTradeIns)}
 								updateItem={(id, field, value) => {
 									if (field === "name") {
-										updateItemName(id, value as string, tradeIns, setTradeIns);
+										// Directly update the state with the new name
+										const updatedItems = tradeIns.map((item) =>
+											item.id === id ? { ...item, name: value as string } : item
+										);
+										setTradeIns(updatedItems);
 									} else {
+										// Handle value updates
 										updateItemValue(id, value as string, tradeIns, setTradeIns);
 									}
 								}}
@@ -984,13 +990,13 @@ export default function CarPaymentCalculator() {
 								}
 								updateItem={(id, field, value) => {
 									if (field === "name") {
-										updateItemName(
-											id,
-											value as string,
-											accessories,
-											setAccessories
+										// Directly update the state with the new name
+										const updatedItems = accessories.map((item) =>
+											item.id === id ? { ...item, name: value as string } : item
 										);
+										setAccessories(updatedItems);
 									} else {
+										// Handle value updates
 										updateItemValue(
 											id,
 											value as string,
@@ -1016,13 +1022,13 @@ export default function CarPaymentCalculator() {
 								}
 								updateItem={(id, field, value) => {
 									if (field === "name") {
-										updateItemName(
-											id,
-											value as string,
-											offersRebates,
-											setOffersRebates
+										// Directly update the state with the new name
+										const updatedItems = offersRebates.map((item) =>
+											item.id === id ? { ...item, name: value as string } : item
 										);
+										setOffersRebates(updatedItems);
 									} else {
+										// Handle value updates
 										updateItemValue(
 											id,
 											value as string,
@@ -1052,13 +1058,13 @@ export default function CarPaymentCalculator() {
 								}
 								updateItem={(id, field, value) => {
 									if (field === "name") {
-										updateItemName(
-											id,
-											value as string,
-											protectionPlans,
-											setProtectionPlans
+										// Directly update the state with the new name
+										const updatedItems = protectionPlans.map((item) =>
+											item.id === id ? { ...item, name: value as string } : item
 										);
+										setProtectionPlans(updatedItems);
 									} else {
+										// Handle value updates
 										updateItemValue(
 											id,
 											value as string,
@@ -1084,13 +1090,13 @@ export default function CarPaymentCalculator() {
 								}
 								updateItem={(id, field, value) => {
 									if (field === "name") {
-										updateItemName(
-											id,
-											value as string,
-											subscriptions,
-											setSubscriptions
+										// Directly update the state with the new name
+										const updatedItems = subscriptions.map((item) =>
+											item.id === id ? { ...item, name: value as string } : item
 										);
+										setSubscriptions(updatedItems);
 									} else {
+										// Handle value updates
 										updateItemValue(
 											id,
 											value as string,
@@ -1112,8 +1118,13 @@ export default function CarPaymentCalculator() {
 								removeItem={(id) => removeLineItem(id, chargers, setChargers)}
 								updateItem={(id, field, value) => {
 									if (field === "name") {
-										updateItemName(id, value as string, chargers, setChargers);
+										// Directly update the state with the new name
+										const updatedItems = chargers.map((item) =>
+											item.id === id ? { ...item, name: value as string } : item
+										);
+										setChargers(updatedItems);
 									} else {
+										// Handle value updates
 										updateItemValue(id, value as string, chargers, setChargers);
 									}
 								}}
